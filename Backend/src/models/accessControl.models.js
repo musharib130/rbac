@@ -1,4 +1,4 @@
-const sql = require("../services/db");
+const sql = require("../config/db");
 const { v1: uuid } = require('uuid');
 
 exports.getAllPermissions = () => {
