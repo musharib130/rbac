@@ -1,4 +1,4 @@
-const { groupPermissions } = require("./accessControl.helpers")
+const { groupPermissions } = require("../crud/accessControl.helpers")
 
 class RoleBasedAccessControl {
 
@@ -8,11 +8,23 @@ class RoleBasedAccessControl {
     }
 
     roleUpdated(roleId) {
-        return this.redis.del(roleId)
+        return this.redis.del(this.redisRoleKey(roleId))
     }
 
-    permissionsUpdated() {
-        return this.redis.flushDb()
+    async permissionsUpdated() {
+        let cursor = '0';
+        do {
+            const reply = await this.redis.scan(cursor, {
+                MATCH: 'roleId:',
+                COUNT: 100,
+            });
+            cursor = reply.cursor;
+            const keys = reply.keys;
+
+            if (keys.length > 0) {
+                await client.unlink(keys);
+            }
+        } while (cursor !== '0');
     }
 
     hasPermissionMiddleware(permission) {
@@ -72,7 +84,7 @@ class RoleBasedAccessControl {
             pList.push(permissionStr)
 
             this.addPermissionToRole(roleId, permission.childern, permissionStr, pList)
-        
+
             return pList
         }
     }

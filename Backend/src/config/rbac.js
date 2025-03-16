@@ -1,10 +1,8 @@
-const RoleBasedAccessControl = require('../roleBasedAccessController/RoleBasedAccessControl');
 const redisClient = require('./redis');
 const sqlClient = require('./db');
-const { setSqlPromisePool } = require('../roleBasedAccessController/accessControl.models');
+const { initRbac } = require('../roleBasedAccessController');
 
 // Create the singleton instance of RoleBasedAccessControl
-const roleBasedAccessControl = new RoleBasedAccessControl(redisClient, sqlClient);
-setSqlPromisePool(sqlClient)
+const roleBasedAccessControl = initRbac(redisClient, sqlClient);
 
 module.exports = roleBasedAccessControl;
