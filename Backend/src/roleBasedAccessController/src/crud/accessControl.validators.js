@@ -1,7 +1,9 @@
-const { permissionKeyValidator, idValidator, stringValidator } = require('./accessControl.helpers');
+const { body } = require('express-validator');
+const { permissionKeyValidator, idValidator, stringValidator, addPermissionCustomValidator } = require('./accessControl.helpers');
 
 exports.addPermission = [
     permissionKeyValidator('key'),
+    idValidator('parentId'),
     idValidator('parentId')
 ]
 

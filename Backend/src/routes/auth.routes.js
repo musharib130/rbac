@@ -4,8 +4,7 @@ const router = express.Router();
 const authController = require('../controllers/auth.controllers');
 const { checkToken } = require('../middlewares/auth.middlewares');
 
-const rbac = require('../config/rbac');
-const { deletePermission, updatePermission } = require('../roleBasedAccessController/accessControl.validators');
+const { addPermission } = require('../roleBasedAccessController/src/crud/accessControl.validators');
 const { validationResult } = require('express-validator');
 
 router.post('/login', authController.login)
@@ -14,7 +13,7 @@ router.post('/register', authController.register)
 
 router.get(
     '/validateToken', 
-    updatePermission,
+    addPermission,
     (req, res) => {
         const vs = validationResult(req)
 

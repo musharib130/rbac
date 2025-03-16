@@ -1,6 +1,6 @@
-const { setSqlPromisePool } = require('./src/accessControl.models')
-const rbacRouter = require('./src/accessControl.routes')
-const RoleBasedAccessControl = require('./src/RoleBasedAccessControl')
+const { setSqlPromisePool } = require('./src/crud/accessControl.models')
+const rbacRouter = require('./src/crud/accessControl.routes')
+const RoleBasedAccessControl = require('./src/RbacCore/RoleBasedAccessControl')
 
 const initRbac = (redis, sql) => {
 
@@ -9,7 +9,7 @@ const initRbac = (redis, sql) => {
     const roleBasedAccessControl = new RoleBasedAccessControl(redis, sql)
     setSqlPromisePool(sql)
 
-    return roleBasedAccessControl()
+    return roleBasedAccessControl
 }
 
 module.exports = { rbacRouter, initRbac }
