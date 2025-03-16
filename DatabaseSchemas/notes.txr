@@ -1,1 +1,0 @@
-change refrence table and column of accounts.parentId from users.userId to accounts.accountId

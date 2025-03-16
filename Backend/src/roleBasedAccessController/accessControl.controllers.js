@@ -1,5 +1,5 @@
-const accessControlModels = require('../models/accessControl.models')
-const accessControlHelpers = require('../helpers/accessControl.helpers')
+const accessControlModels = require('./accessControl.models')
+const accessControlHelpers = require('./accessControl.helpers')
 
 exports.getAllPermissions = async (req, res, next) => {
     try {
@@ -79,6 +79,7 @@ exports.getAllRoles = async (req, res, next) => {
     }
 }
 
+// do this in the last //
 exports.getRoleDetails = async (req, res, next) => {
     try {
         const roleId = req.params.id

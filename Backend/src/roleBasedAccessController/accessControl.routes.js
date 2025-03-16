@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const accessControlControllers = require('../controllers/accessControl.controllers');
+const accessControlControllers = require('./accessControl.controllers');
 
 /////////////////////
 // Pemissions CRUD //
@@ -36,9 +36,5 @@ router.patch('/role', accessControlControllers.updateRole);
 
 // Delete a role
 router.delete('/role', accessControlControllers.deleteRole);
-
-///////////////////////
-// Roles Permissions //
-///////////////////////
 
 module.exports = router;

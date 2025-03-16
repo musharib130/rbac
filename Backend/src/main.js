@@ -20,7 +20,7 @@ app.get("/", (req, res) =>
 );
 
 app.use('/auth', require('./routes/auth.routes'))
-app.use('/access-control', require('./routes/accessControl.routes'))
+app.use('/access-control', require('./roleBasedAccessController/accessControl.routes'))
 
 app.use((err, req, res, next) => {
     console.error(err);

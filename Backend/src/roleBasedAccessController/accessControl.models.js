@@ -1,5 +1,10 @@
-const sql = require("../config/db");
 const { v1: uuid } = require('uuid');
+
+let sql;
+
+exports.setSqlPromisePool = (pool) => {
+    sql = pool
+}
 
 exports.getAllPermissions = () => {
     return sql.query('SELECT * FROM permissions');

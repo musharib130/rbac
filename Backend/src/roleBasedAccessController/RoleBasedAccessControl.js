@@ -1,3 +1,5 @@
+const { groupPermissions } = require("./accessControl.helpers")
+
 class RoleBasedAccessControl {
 
     constructor(redis, sql) {
@@ -14,9 +16,9 @@ class RoleBasedAccessControl {
     }
 
     hasPermissionMiddleware(permission) {
-        return async (req, res, next) => {   
+        return async (req, res, next) => {
             const hasPermission = await this.hasPermission(req.roleId, permission)
-            
+
             if (hasPermission) {
                 next()
             } else {
@@ -26,15 +28,14 @@ class RoleBasedAccessControl {
     }
 
     async hasPermission(roleId, permission) {
-        
-        console.log(roleId, permission)
-        const hasKey = await this.redis.exists(roleId)
+
+        const hasKey = await this.redis.exists(this.redisRoleKey(roleId))
 
         if (!hasKey) {
             await this.setRole(roleId)
         }
 
-        return this.redis.sIsMember(roleId, permission)
+        return this.redis.sIsMember(this.redisRoleKey(roleId), permission)
     }
 
     async setRole(roleId) {
@@ -48,54 +49,36 @@ class RoleBasedAccessControl {
             )
 
             if (!rows.length) {
-                this.redis.sAdd(roleId, 'not-a-role')
-                this.redis.expire(roleId, 60)
-                return 
+                return this.redis.multi()
+                    .sAdd(this.redisRoleKey(roleId), 'not-a-role')
+                    .expire(this.redisRoleKey(roleId), 60)
+                    .execAsync()
             }
 
-            const groupedPermissions = this.groupPermissions(rows)
+            const groupedPermissions = groupPermissions(rows)
 
-            this.addPermissionToRole(roleId, groupedPermissions)
+            const pList = this.addPermissionToRole(roleId, groupedPermissions)
 
-        } catch(error) {
+            await this.redis.sAdd(this.redisRoleKey(roleId), pList)
+        } catch (error) {
             console.log(error)
         }
     }
 
-    addPermissionToRole(roleId, permissions, str = '') {
+    addPermissionToRole(roleId, permissions, str = '', pList = []) {
         for (const permission of permissions) {
             const permissionStr = str + `${str.length ? ':' : ''}` + permission.permissionKey
 
-            this.redis.sAdd(roleId, permissionStr)
+            pList.push(permissionStr)
 
-            this.addPermissionToRole(roleId, permission.childern, permissionStr)
+            this.addPermissionToRole(roleId, permission.childern, permissionStr, pList)
+        
+            return pList
         }
     }
 
-    groupPermissions = rows => {
-        const groupedRows = new Map()
-    
-        const permissionsMap = new Map()
-    
-        rows.forEach(row => {
-            if (groupedRows.has(row.parentId)) {
-                groupedRows.get(row.parentId).push(row)
-            } else {
-                groupedRows.set(row.parentId, [row])
-            }
-    
-            row.childern = []
-    
-            permissionsMap.set(row.permissionId, row)
-        })
-    
-        groupedRows.forEach((value, key) => {
-            if (!key) return
-    
-            permissionsMap.get(key).childern = value
-        })
-    
-        return groupedRows.get(null)
+    redisRoleKey(roleId) {
+        return `roleId:${roleId}`
     }
 }
 
