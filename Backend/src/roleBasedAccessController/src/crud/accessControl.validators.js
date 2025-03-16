@@ -1,10 +1,10 @@
 const { body } = require('express-validator');
-const { permissionKeyValidator, idValidator, stringValidator, addPermissionCustomValidator } = require('./accessControl.helpers');
+const { permissionKeyValidator, idValidator, stringValidator, addPermissionCustomValidator, arrayValidator, checkDuplicationInArray, checkPermissionsExist, updatePermissionsCustomValidator } = require('./accessControl.helpers');
 
 exports.addPermission = [
     permissionKeyValidator('key'),
-    idValidator('parentId'),
-    idValidator('parentId')
+    idValidator('parentId', 'body', true),
+    body().custom(addPermissionCustomValidator)
 ]
 
 exports.updatePermission = [
@@ -12,21 +12,24 @@ exports.updatePermission = [
     idValidator('permissionId')
 ]
 
-exports.deletePermission = [
-    idValidator('permissionId')
+exports.idInParam = [
+    idValidator('id', 'param')
 ]
 
 exports.createRole = [
     stringValidator('roleName'),
-    idValidator('permissions.*')
+    arrayValidator('permissions'),
+    idValidator('permissions.*'),
+    body('permissions').custom(checkPermissionsExist)
 ]
 
-exports.deleteRole = [
-    idValidator('roleId')
-]
-
+//todo
 exports.updateRole = [
     idValidator('roleId'),
+    stringValidator('roleName', 'body', true),
+    arrayValidator('addPermissions', 'body', true),
+    arrayValidator('removePermissions', 'body', true),
     idValidator('addPermissions.*'),
-    idValidator('removePermissions.*')
+    idValidator('removePermissions.*'),
+    body().custom(updatePermissionsCustomValidator)
 ]

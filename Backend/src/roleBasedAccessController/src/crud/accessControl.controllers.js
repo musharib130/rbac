@@ -15,12 +15,7 @@ exports.getAllPermissions = async (req, res, next) => {
 
 exports.addPermission = async (req, res, next) => {
     try {
-
         const { key, parentId } = req.body
-
-        if (!key || typeof (key) !== 'string' || !key.length) {
-            return res.status(400).json({ message: 'Invalid Key' })
-        }
 
         const UUID = await accessControlModels.addPermission(key, parentId)
 
@@ -37,14 +32,6 @@ exports.updatePermissionKey = async (req, res, next) => {
     try {
         const { permissionId, key } = req.body
 
-        if (!permissionId || typeof (permissionId) !== 'string' || permissionId.length !== 36) {
-            return res.status(400).json({ message: 'Invalid PermissionId' })
-        }
-
-        if (!key || typeof (key) !== 'string' || !key.length) {
-            return res.status(400).json({ message: 'Invalid Permission Key' })
-        }
-
         await accessControlModels.updatePermissionKey(permissionId, key)
 
         res.status(204).send()
@@ -55,11 +42,7 @@ exports.updatePermissionKey = async (req, res, next) => {
 
 exports.deletePermission = async (req, res, next) => {
     try {
-        const { permissionId } = req.body
-
-        if (!permissionId || typeof (permissionId) !== 'string' || permissionId.length !== 36) {
-            return res.status(400).json({ message: 'Invalid PermissionId' })
-        }
+        const { permissionId } = req.params.id
 
         await accessControlModels.deletePermission(permissionId)
 
@@ -79,7 +62,6 @@ exports.getAllRoles = async (req, res, next) => {
     }
 }
 
-// do this in the last //
 exports.getRoleDetails = async (req, res, next) => {
     try {
         const roleId = req.params.id
@@ -116,14 +98,6 @@ exports.createRole = async (req, res, next) => {
     try {
         const { roleName, permissions } = req.body
 
-        if (!roleName || typeof (roleName) !== 'string' || !roleName.length) {
-            return res.status(400).json({ message: 'Invalid Role Name' })
-        }
-
-        if (!permissions || !Array.isArray(permissions) || !permissions.length || permissions.some(permission => typeof(permission) !== 'string' || permission.length !== 36)) {
-            return res.status(400).json({ message: 'Invalid Permission' })
-        }
-
         const roleId = await accessControlModels.addRole(roleName, permissions)
 
         res.status(201).json({
@@ -138,11 +112,7 @@ exports.createRole = async (req, res, next) => {
 
 exports.deleteRole = async (req, res, next) => {
     try {
-        const { roleId} = req.body
-
-        if (!roleId || typeof (roleId) !== 'string' || roleId.length !== 36) {
-            return res.status(400).json({ message: 'Invalid Role Id' })
-        }
+        const { roleId } = req.params.id
 
         await accessControlModels.deleteRole(roleId)
 

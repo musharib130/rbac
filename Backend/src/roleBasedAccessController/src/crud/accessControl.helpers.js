@@ -1,4 +1,5 @@
 const { param, query, body } = require("express-validator")
+const { duplicateKeyOrInvalidParentId, permissionsCount, updateRoleValidations } = require("./accessControl.models")
 
 exports.groupPermissions = rows => {
     const groupedRows = new Map()
@@ -26,7 +27,6 @@ exports.groupPermissions = rows => {
     return groupedRows.get(null)
 }
 
-
 exports.stringValidator = (key, location = 'body', optional = false) => {
     return readyParameter(key, optional, location)
         .isString().withMessage(`${key} must be a string`)
@@ -48,6 +48,96 @@ exports.idValidator = (key, location = 'body', optional = false) => {
         .isLength({ min: 36, max: 36 }).withMessage(`Invalid ${key}`)
 }
 
+exports.arrayValidator = (key, location = 'body', optional = false) => {
+    return readyParameter(key, optional, location)
+        .isArray().withMessage(`${key} must be an Array`)
+        .custom((value) => {
+            const subjectSet = new Set(value)
+    
+            if (value.length !== subjectSet.size) {
+                throw new Error(`One or more duplicate items in ${key}`)
+            }
+        
+            return true
+        })
+}
+
+exports.checkPermissionsExist = async (value) => {
+    try {
+        const [rows] = await permissionsCount(value)
+
+        if (rows[0].count !== value.length) {
+            customError("One of more permissions don't exist")
+        } 
+
+        return true
+
+    } catch (err) {
+        handleError(err)
+    }
+}
+
+exports.addPermissionCustomValidator = async (value) => {
+    try {
+        const { key, parentId } = value
+
+        const [rows] = await duplicateKeyOrInvalidParentId(key, parentId)
+
+        for (const row of rows) {
+            const invalid = row.count === 1
+
+            if (!invalid) continue
+
+            if (row.status === 'duplicate') {
+                throw customError('Duplicate Permission')
+            } else if ('invalidParent') {
+                throw customError('Invalid ParentId')
+            } else {
+                throw customError('Invalid Values')
+            }
+        }
+
+        return true
+    } catch (err) {
+        handleError(err)
+    }
+}
+
+exports.updatePermissionsCustomValidator = async (value) => {
+    try {
+        
+
+        const { roleId, roleName, addPermissions, removePermissions } = value
+
+        if (addPermissions && removePermissions) {
+            const common = new Set([...addPermissions].filter(x => removePermissions.includes(x)))
+            
+            if (common.size) {
+                customError('One or more duplicate permissionsIds')
+            }
+        }
+
+        const [rows] = await updateRoleValidations(roleName, roleId, addPermissions)
+        
+        for (const row of rows) {
+            switch (row.title) {
+                case 'duplicateRoleName':
+                    if (row.count) customError('Role name already exists')
+                    break;
+                case 'permissionsExists':
+                    if (row.count < addPermissions.length) customError('One or more invalid permission Ids')
+                    break;
+                case 'duplicateAdditions':
+                    if (row.count) customError('One or more permissions already present in role')
+                    break;
+            }
+        }
+
+    } catch (err) {
+        handleError(err)
+    }
+}
+
 const readyParameter = (key, optional, location) => {
     let result;
 
@@ -66,4 +156,20 @@ const readyParameter = (key, optional, location) => {
     }
 
     return optional ? result.optional() : result.notEmpty().withMessage(`${key} is requried`)
+}
+
+const handleError = (err) => {
+    if (err.isMine) {
+        throw err
+    }
+    else {
+        console.log(err)
+        throw new Error('An unexpected Error Occured')
+    }
+}
+
+const customError = (msg) => {
+    const err = new Error(msg)
+    err.isMine = true
+    throw err
 }

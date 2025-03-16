@@ -16,7 +16,7 @@ router.post('/permission', accessControlControllers.addPermission);
 router.patch('/permission', accessControlControllers.updatePermissionKey);
 
 // Delete a permission
-router.delete('/permission', accessControlControllers.deletePermission);
+router.delete('/permission/:id', accessControlControllers.deletePermission);
 
 ////////////////
 // Roles CRUD //
@@ -35,6 +35,6 @@ router.post('/role', accessControlControllers.createRole);
 router.patch('/role', accessControlControllers.updateRole);
 
 // Delete a role
-router.delete('/role', accessControlControllers.deleteRole);
+router.delete('/role/:id', accessControlControllers.deleteRole);
 
 module.exports = router;
