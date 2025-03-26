@@ -1,4 +1,4 @@
-const { param, query, body } = require("express-validator")
+const { param, query, body, validationResult } = require("express-validator")
 const { duplicateKeyOrInvalidParentId, permissionsCount, updateRoleValidations } = require("./accessControl.models")
 
 exports.groupPermissions = rows => {
@@ -90,7 +90,7 @@ exports.addPermissionCustomValidator = async (value) => {
 
             if (row.status === 'duplicate') {
                 throw customError('Duplicate Permission')
-            } else if ('invalidParent') {
+            } else if (row.status === 'invalidParent') {
                 throw customError('Invalid ParentId')
             } else {
                 throw customError('Invalid Values')
@@ -105,8 +105,6 @@ exports.addPermissionCustomValidator = async (value) => {
 
 exports.updatePermissionsCustomValidator = async (value) => {
     try {
-        
-
         const { roleId, roleName, addPermissions, removePermissions } = value
 
         if (addPermissions && removePermissions) {
@@ -117,10 +115,17 @@ exports.updatePermissionsCustomValidator = async (value) => {
             }
         }
 
+        if (!roleName && !addPermissions && !removePermissions) {
+            customError("Atleast one field is required")
+        }
+
         const [rows] = await updateRoleValidations(roleName, roleId, addPermissions)
         
         for (const row of rows) {
             switch (row.title) {
+                case 'roleExists':
+                    if (!row.count) customError('Invalid RoleId')
+                    break
                 case 'duplicateRoleName':
                     if (row.count) customError('Role name already exists')
                     break;
@@ -136,6 +141,16 @@ exports.updatePermissionsCustomValidator = async (value) => {
     } catch (err) {
         handleError(err)
     }
+}
+
+exports.validationError = (req, res, next) => {
+    const vs = validationResult(req)
+    
+    if (vs.errors.length) {
+        return res.status(400).send({ message: vs.errors[0].msg })
+    }
+
+    next()
 }
 
 const readyParameter = (key, optional, location) => {

@@ -42,7 +42,7 @@ exports.updatePermissionKey = async (req, res, next) => {
 
 exports.deletePermission = async (req, res, next) => {
     try {
-        const { permissionId } = req.params.id
+        const permissionId = req.params.id
 
         await accessControlModels.deletePermission(permissionId)
 

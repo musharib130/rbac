@@ -111,39 +111,46 @@ exports.duplicateKeyOrInvalidParentId = (key, parentId) => {
 
     const pair = `${key}${parentId ?? ''}`
 
-    return sql.query(
-        `(SELECT 'duplicate' AS status, COUNT(*) AS count FROM permissions
-        WHERE CONCAT(permissionKey, IFNULL(parentId, '')) = ?) 
-        UNION ALL 
-        (SELECT 'validParent' AS status, 1 - COUNT(*) AS count FROM permissions
-        WHERE permissionId = ?)`,
-        [pair, parentId]
-    )
+    let query = `(SELECT 'duplicate' AS status, COUNT(*) AS count FROM permissions
+        WHERE CONCAT(permissionKey, IFNULL(parentId, '')) = ?)`
+
+    const params = [pair]
+
+    if (parentId) {
+        query += `
+            UNION ALL 
+            (SELECT 'invalidParent' AS status, 1 - COUNT(*) AS count FROM permissions
+            WHERE permissionId = ?)`
+    
+        params.push(parentId)
+    }
+
+    return sql.query(query, params)
 }
 
+
 exports.updateRoleValidations = (roleName, roleId, addPermissions) => {
-    
-    let query = ``
-    
-    let params = []
+
+    let query = `(SELECT 'roleExists' AS title, count(*) AS count FROM roles WHERE roleId = ?)`
+
+    let params = [roleId]
 
     if (roleName) {
-        query += `(SELECT 'duplicateRoleName' AS title, count(*) AS count FROM roles WHERE roleName = ?)`
-    
-        params = [roleName]
+        query += `UNION ALL
+        (SELECT 'duplicateRoleName' AS title, count(*) AS count FROM roles WHERE roleName = ?)`
+
+        params = [...params, roleName]
     }
 
     if (addPermissions) {
-        if (query.length) query += `UNION ALL`
-        
-        query += `
+        query += `UNION ALL
         (SELECT 'permissionsExists' AS title, count(*) as count FROM permissions WHERE permissionId IN (?))
         UNION ALL
         (SELECT 'duplicateAdditions' AS title, count(*) AS count FROM rolepermissions WHERE roleId = ? AND permissionId IN (?))`
-    
+
         params = [...params, addPermissions, roleId, addPermissions]
     }
-    
+
     return sql.query(query, params)
 }
 

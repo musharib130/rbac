@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const accessControlControllers = require('./accessControl.controllers');
+const accessControlValidators = require('./accessControl.validators');
+const { validationError } = require('./accessControl.helpers');
 
 /////////////////////
 // Pemissions CRUD //
@@ -10,13 +12,28 @@ const accessControlControllers = require('./accessControl.controllers');
 router.get('/permissions', accessControlControllers.getAllPermissions);
 
 // Create new permissions
-router.post('/permission', accessControlControllers.addPermission);
+router.post(
+    '/permission',  
+    accessControlValidators.addPermission,
+    validationError,
+    accessControlControllers.addPermission
+);
 
 // Update a permission
-router.patch('/permission', accessControlControllers.updatePermissionKey);
+router.patch(
+    '/permission', 
+    accessControlValidators.updatePermission,
+    validationError,
+    accessControlControllers.updatePermissionKey
+);
 
 // Delete a permission
-router.delete('/permission/:id', accessControlControllers.deletePermission);
+router.delete(
+    '/permission/:id', 
+    accessControlValidators.idInParam,
+    validationError,
+    accessControlControllers.deletePermission
+);
 
 ////////////////
 // Roles CRUD //
@@ -26,15 +43,35 @@ router.delete('/permission/:id', accessControlControllers.deletePermission);
 router.get('/roles', accessControlControllers.getAllRoles);
 
 // get role with details
-router.get('/role/:id', accessControlControllers.getRoleDetails)
+router.get(
+    '/role/:id', 
+    accessControlValidators.idInParam,
+    validationError,
+    accessControlControllers.getRoleDetails
+)
 
 // Create a new role
-router.post('/role', accessControlControllers.createRole);
+router.post(
+    '/role', 
+    accessControlValidators.createRole,
+    validationError,
+    accessControlControllers.createRole
+);
 
 // Update a role
-router.patch('/role', accessControlControllers.updateRole);
+router.patch(
+    '/role', 
+    accessControlValidators.updateRole,
+    validationError,
+    accessControlControllers.updateRole
+);
 
 // Delete a role
-router.delete('/role/:id', accessControlControllers.deleteRole);
+router.delete(
+    '/role/:id', 
+    accessControlValidators.idInParam,
+    validationError,
+    accessControlControllers.deleteRole
+);
 
 module.exports = router;
